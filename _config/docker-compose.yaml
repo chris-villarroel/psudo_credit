@@ -1,0 +1,62 @@
+version: '3'
+
+services:
+  nginx_psudo_credit:
+    image: nginx:latest
+    container_name: nginx_psudo_credit
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - nginxconf-psudo_credit:/etc/nginx/conf.d
+      - certbot-etc-psudo_credit:/etc/letsencrypt
+      - webroot-psudo_credit:/etc/letsencrypt/webrootauth
+    networks:
+      - app-network
+    depends_on:
+      - psudo_credit
+
+  psudo_credit:
+    image: pajar0p/psudo_credit:v1
+    container_name: psudo_credit
+    expose:
+      - "5000"
+    ports:
+      - "5000:5000"
+    networks:
+      - app-network
+
+  certbot_psudo_credit:
+    image: certbot/certbot
+    container_name: certbot_psudo_credit
+    volumes:
+      - certbot-etc-psudo_credit:/etc/letsencrypt
+      - webroot-psudo_credit:/etc/letsencrypt/webrootauth
+    command: certonly --webroot --webroot-path=/etc/letsencrypt/webrootauth/ --email villarroel.cvd@gmail.com --agree-tos --no-eff-email -d aidriven.cl -d www.aidriven.cl
+    depends_on:
+      - nginx_psudo_credit
+
+volumes:
+  certbot-etc-psudo_credit:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /root/psudo_credit/certbot
+  nginxconf-psudo_credit:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /root/psudo_credit/nginxconf
+  webroot-psudo_credit:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /root/psudo_credit/certbot/webrootauth
+
+networks:
+  app-network:
+    driver: bridge
